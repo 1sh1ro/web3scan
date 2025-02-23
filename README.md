@@ -21,7 +21,7 @@
 
 1. 克隆项目
 ```bash
-git clone [your-repository-url]
+git clone [https://github.com/1sh1ro/web3scan]
 cd go-scan
 ```
 
