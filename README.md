@@ -14,7 +14,7 @@
 
 - **后端**：Python + Flask
 - **前端**：Vue.js + Element UI
-- **AI模型**：OpenAI GPT-4
+- **AI模型**：Openai 兼容
 - **数据存储**：SQLite
 
 ## 📦 安装使用
