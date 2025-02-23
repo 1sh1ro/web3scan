@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI分析 - Web3智能合约漏洞扫描系统</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .vulnerability-list {
+            max-height: 600px;
+            overflow-y: auto;
+            border-radius: 8px;
+        }
+        .vulnerability-item {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 6px;
+            margin: 8px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .vulnerability-item:hover {
+            background-color: #f8f9fa;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .vulnerability-item.active {
+            background-color: #e9ecef;
+            border-left: 4px solid #0d6efd;
+        }
+        .analysis-result {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 16px;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .report-preview {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 16px;
+            border-radius: 8px;
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+        }
+        .card {
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: none;
+            margin-bottom: 24px;
+        }
+        .card-body {
+            padding: 24px;
+        }
+        .btn {
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .badge {
+            padding: 6px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        .spinner-border {
+            width: 1.5rem;
+            height: 1.5rem;
+            margin-bottom: 8px;
+        }
+        pre {
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+        code {
+            color: #333;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">Web3扫描器</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/scan">合约扫描</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/analysis">AI分析</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/rules">规则管理</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-5">
+        <h1 class="mb-4 px-3">AI深度分析</h1>
+        <div class="px-3 mb-4">
+            <button class="btn btn-primary" onclick="startBatchAnalysis()">开始批量分析</button>
+        </div>
+        <div id="analysisProgress" class="px-3 mb-4 d-none">
+            <div class="progress" style="height: 25px; background-color: #f0f0f0; border-radius: 10px; box-shadow: inset 0 1px 3px rgba(0,0,0,.2);">
+                <div id="analysisProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%; font-size: 14px; font-weight: 600; background-color: #0d6efd;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+            </div>
+            <div class="text-center mt-2 text-muted small" id="progressStatus">准备开始分析...</div>
+        </div>
+        
+        <div class="row mx-2">
+            <div class="col-md-4">
+                <div class="card mb-4 h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">潜在漏洞列表</h5>
+                        <div class="vulnerability-list" id="vulnerabilityList">
+                            <!-- 漏洞列表将通过JavaScript动态加载 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">AI分析结果</h5>
+                        <div id="analysisResult" class="analysis-result">
+                            <p class="text-muted">请选择左侧的漏洞进行分析...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">漏洞报告</h5>
+                        <div class="report-preview mb-3" id="reportPreview">
+                            <p class="text-muted">报告预览区域...</p>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-primary" onclick="generateReport()">生成报告</button>
+                            <button class="btn btn-secondary" onclick="downloadReport()">下载报告</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 加载漏洞列表
+        async function loadVulnerabilities() {
+            const listDiv = document.getElementById('vulnerabilityList');
+            const resultDiv = document.getElementById('analysisResult');
+            const previewDiv = document.getElementById('reportPreview');
+            
+            // 清空所有相关区域
+            listDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div><p>加载中...</p></div>';
+            resultDiv.innerHTML = '<p class="text-muted">请选择左侧的漏洞进行分析...</p>';
+            previewDiv.innerHTML = '<p class="text-muted">报告预览区域...</p>';
+
+            try {
+                const response = await fetch('/api/vulnerabilities');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    if (data.vulnerabilities.length === 0) {
+                        listDiv.innerHTML = '<p class="text-muted">暂无发现的漏洞</p>';
+                        return;
+                    }
+
+                    listDiv.innerHTML = data.vulnerabilities.map(vuln => `
+                        <div class="vulnerability-item p-3 border-bottom" onclick="analyzeVulnerability('${vuln.id}')">
+                            <h6 class="mb-2">${vuln.rule_name}</h6>
+                            <div class="small text-muted">
+                                <div>文件：${vuln.file_path}</div>
+                                <div>行号：${vuln.line_number}</div>
+                                <div>严重度：<span class="badge bg-${vuln.severity === 'high' ? 'danger' : vuln.severity === 'medium' ? 'warning' : 'info'}">${vuln.severity}</span></div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    listDiv.innerHTML = `<div class="alert alert-danger">加载失败：${data.error}</div>`;
+                }
+            } catch (error) {
+                listDiv.innerHTML = `<div class="alert alert-danger">请求失败：${error.message}</div>`;
+            }
+        }
+
+        // 监听清空漏洞列表事件
+        window.addEventListener('clearVulnerabilities', function() {
+            const listDiv = document.getElementById('vulnerabilityList');
+            const resultDiv = document.getElementById('analysisResult');
+            const previewDiv = document.getElementById('reportPreview');
+            
+            // 清空所有相关区域
+            listDiv.innerHTML = '<p class="text-muted">暂无发现的漏洞</p>';
+            resultDiv.innerHTML = '<p class="text-muted">请选择左侧的漏洞进行分析...</p>';
+            previewDiv.innerHTML = '<p class="text-muted">报告预览区域...</p>';
+        });
+
+        // 分析单个漏洞
+        async function analyzeVulnerability(vulnId) {
+            const resultDiv = document.getElementById('analysisResult');
+            resultDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div><p>正在分析...</p></div>';
+
+            try {
+                const response = await fetch(`/api/analyze/${vulnId}`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    resultDiv.innerHTML = `
+                        <div class="analysis-result">
+                            <div class="alert ${data.analysis.vulnerability_confirmed ? 'alert-danger' : 'alert-success'} mb-3">
+                                <strong>漏洞确认：</strong> ${data.analysis.vulnerability_confirmed ? '存在漏洞' : '未发现漏洞'}
+                                <br>
+                                <strong>置信度：</strong> ${(data.analysis.confidence_score * 100).toFixed(1)}%
+                            </div>
+                            <h6>详细分析</h6>
+                            <div class="mb-3">${data.analysis.explanation.replace(/\n/g, '<br>')}</div>
+                            ${data.analysis.poc ? `
+                                <h6>漏洞利用证明（POC）</h6>
+                                <pre class="bg-light p-3 mb-3"><code>${data.analysis.poc}</code></pre>
+                            ` : ''}
+                            ${data.analysis.remediation ? `
+                                <h6>修复建议</h6>
+                                <div class="mb-3">${data.analysis.remediation.replace(/\n/g, '<br>')}</div>
+                            ` : ''}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="alert alert-danger">分析失败：${data.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="alert alert-danger">请求失败：${error.message}</div>`;
+            }
+        }
+
+        // 批量分析
+        async function startBatchAnalysis() {
+            const listDiv = document.getElementById('vulnerabilityList');
+            const resultDiv = document.getElementById('analysisResult');
+            const progressBar = document.getElementById('analysisProgressBar');
+            const progressDiv = document.getElementById('analysisProgress');
+            
+            try {
+                // 获取漏洞列表
+                const response = await fetch('/api/vulnerabilities');
+                const data = await response.json();
+                
+                if (!data.vulnerabilities || !data.vulnerabilities.length) {
+                    resultDiv.innerHTML = '<div class="alert alert-warning">没有发现需要分析的漏洞</div>';
+                    return;
+                }
+                
+                // 显示进度条
+                progressDiv.classList.remove('d-none');
+                resultDiv.innerHTML = '';
+                
+                // 开始批量分析
+                const total = data.vulnerabilities.length;
+                let completed = 0;
+                
+                for (const vuln of data.vulnerabilities) {
+                    // 更新进度
+                    const progress = Math.round((completed / total) * 100);
+                    progressBar.style.width = `${progress}%`;
+                    progressBar.textContent = `${progress}%`;
+                    document.getElementById('progressStatus').textContent = `正在分析第 ${completed + 1} 个漏洞，共 ${total} 个...`;
+                    
+                    // 分析当前漏洞
+                    const analysisResponse = await fetch(`/api/analyze/${vuln.id}`);
+                    const analysisData = await analysisResponse.json();
+                    
+                    if (analysisData.status === 'success') {
+                        // 添加分析结果到结果区域
+                        const resultHtml = `
+                            <div class="mb-4 border-bottom pb-3">
+                                <h6>漏洞 #${vuln.id}</h6>
+                                <div class="alert ${analysisData.analysis.vulnerability_confirmed ? 'alert-danger' : 'alert-success'} mb-3">
+                                    <strong>漏洞确认：</strong> ${analysisData.analysis.vulnerability_confirmed ? '存在漏洞' : '未发现漏洞'}
+                                    <br>
+                                    <strong>置信度：</strong> ${(analysisData.analysis.confidence_score * 100).toFixed(1)}%
+                                </div>
+                                <h6>详细分析</h6>
+                                <div class="mb-3">${analysisData.analysis.explanation.replace(/\n/g, '<br>')}</div>
+                                ${analysisData.analysis.poc ? `
+                                    <h6>漏洞利用证明（POC）</h6>
+                                    <pre class="bg-light p-3 mb-3"><code>${analysisData.analysis.poc}</code></pre>
+                                ` : ''}
+                                ${analysisData.analysis.remediation ? `
+                                    <h6>修复建议</h6>
+                                    <div class="mb-3">${analysisData.analysis.remediation.replace(/\n/g, '<br>')}</div>
+                                ` : ''}
+                            </div>
+                        `;
+                        resultDiv.innerHTML += resultHtml;
+                    }
+                    
+                    completed++;
+                }
+                
+                // 完成分析
+                progressBar.style.width = '100%';
+                progressBar.textContent = '100%';
+                progressDiv.classList.add('d-none');
+                
+            } catch (error) {
+                console.error('分析出错:', error);
+                resultDiv.innerHTML = `<div class="alert alert-danger">分析过程中出现错误: ${error.message}</div>`;
+                progressDiv.classList.add('d-none');
+            }
+        }
+
+        // 生成报告
+        async function generateReport() {
+            const previewDiv = document.getElementById('reportPreview');
+            previewDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div><p>生成报告中...</p></div>';
+
+            try {
+                const response = await fetch('/api/generate-report');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    previewDiv.innerHTML = `<div class="markdown-body">${data.report}</div>`;
+                } else {
+                    previewDiv.innerHTML = `<div class="alert alert-danger">生成报告失败：${data.error}</div>`;
+                }
+            } catch (error) {
+                previewDiv.innerHTML = `<div class="alert alert-danger">请求失败：${error.message}</div>`;
+            }
+        }
+
+        // 下载报告
+        function downloadReport() {
+            window.location.href = '/api/download-report';
+        }
+
+        // 页面加载时加载漏洞列表
+        document.addEventListener('DOMContentLoaded', loadVulnerabilities);
+    </script>
+</body>
+</html>

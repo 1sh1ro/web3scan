@@ -1,0 +1,18 @@
+{
+    "rules": [
+        {
+            "id": "MORPH-001",
+            "name": "批处理溢出漏洞",
+            "description": "批处理块数量未做合理限制导致DOS攻击",
+            "pattern": "MaxBlocksPerChunk\\s*=\\s*\\d+",
+            "severity": "High",
+            "category": "资源限制",
+            "target_langs": [
+                "go"
+            ],
+            "lang_specific_patterns": {
+                "go": "MaxBlocksPerChunk\\s*=\\s*\\d+"
+            }
+        }
+    ]
+}

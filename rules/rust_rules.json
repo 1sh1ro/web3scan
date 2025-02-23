@@ -1,0 +1,16 @@
+{
+    "rules": [
+        {
+            "id": "RUST-001",
+            "name": "不安全代码块使用",
+            "description": "不安全的Rust代码可能导致内存安全问题",
+            "pattern": "unsafe\\s*\\{.*\\}",
+            "severity": "Critical",
+            "category": "内存安全",
+            "target_langs": ["rust"],
+            "lang_specific_patterns": {
+                "rust": "unsafe\\s*\\{.*\\}"
+            }
+        }
+    ]
+}

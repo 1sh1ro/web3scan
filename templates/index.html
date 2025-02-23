@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web3智能合约漏洞扫描系统</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .feature-icon {
+            font-size: 2.5rem;
+            color: #0d6efd;
+            margin-bottom: 1rem;
+        }
+        .feature-card {
+            transition: transform 0.3s;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">Web3扫描器</a>
+            <button class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#apiConfigModal">API配置</button>
+        </div>
+    </nav>
+
+    <!-- API配置模态框 -->
+    <div class="modal fade" id="apiConfigModal" tabindex="-1" aria-labelledby="apiConfigModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="apiConfigModalLabel">API配置</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="apiBase" class="form-label">API基础URL</label>
+                        <input type="text" class="form-control" id="apiBase" placeholder="https://api.openai.com/v1">
+                        <div class="form-text">支持OpenAI格式的API服务</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="apiKey" class="form-label">API密钥</label>
+                        <input type="password" class="form-control" id="apiKey">
+                    </div>
+                    <div class="mb-3">
+                        <label for="model" class="form-label">AI模型</label>
+                        <select class="form-select" id="model">
+                            <option value="gpt-4">GPT-4</option>
+                            <option value="gpt-3.5-turbo">GPT-3.5-Turbo</option>
+                        </select>
+                        <div class="form-text">选择用于分析的AI模型</div>
+                        <button type="button" class="btn btn-secondary mt-2" onclick="updateModelList()">获取模型列表</button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" onclick="saveApiConfig()">保存配置</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container py-5">
+        <header class="text-center mb-5">
+            <h1 class="display-4 mb-3">Web3智能合约漏洞扫描系统</h1>
+            <p class="lead text-muted">专业的智能合约安全分析工具，集成AI辅助分析</p>
+        </header>
+
+        <div class="row g-4 py-4">
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm feature-card">
+                    <div class="card-body text-center">
+                        <div class="feature-icon">🔍</div>
+                        <h3 class="card-title">合约扫描</h3>
+                        <p class="card-text">上传智能合约文件，自动检测潜在漏洞和安全风险。支持多种合约格式。</p>
+                        <a href="/scan" class="btn btn-primary">开始扫描</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm feature-card">
+                    <div class="card-body text-center">
+                        <div class="feature-icon">🤖</div>
+                        <h3 class="card-title">AI分析</h3>
+                        <p class="card-text">利用GPT-4模型深度分析合约代码，提供专业的安全建议和修复方案。</p>
+                        <a href="/analysis" class="btn btn-primary">查看分析</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm feature-card">
+                    <div class="card-body text-center">
+                        <div class="feature-icon">📋</div>
+                        <h3 class="card-title">规则管理</h3>
+                        <p class="card-text">自定义扫描规则，灵活配置检测策略，满足不同场景的安全需求。</p>
+                        <a href="/rules" class="btn btn-primary">管理规则</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="bg-light py-4 mt-5">
+            <div class="container text-center">
+                <p class="text-muted mb-0">© 2025 Web3智能合约漏洞扫描系统 Designed By xulas</p>
+            </div>
+        </footer>
+
+        <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+        <script>
+        // 页面加载时加载API配置
+        window.addEventListener('load', loadApiConfig);
+
+        // 加载API配置
+        function loadApiConfig() {
+            const apiBase = localStorage.getItem('apiBase') || '';
+            const apiKey = localStorage.getItem('apiKey') || '';
+            const model = localStorage.getItem('model') || 'gpt-4';
+
+            document.getElementById('apiBase').value = apiBase;
+            document.getElementById('apiKey').value = apiKey;
+            document.getElementById('model').value = model;
+        }
+
+        // 保存API配置
+        async function saveApiConfig() {
+            const apiBase = document.getElementById('apiBase').value;
+            const apiKey = document.getElementById('apiKey').value;
+            const model = document.getElementById('model').value;
+            const targetLangs = Array.from(document.querySelectorAll('input[name="targetLangs"]:checked')).map(cb => cb.value);
+
+            if (!apiBase || !apiKey) {
+                alert('请填写API基础URL和密钥');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        api_base: apiBase,
+                        api_key: apiKey,
+                        model: model,
+                        target_langs: targetLangs
+                    })
+                });
+
+                const data = await response.json();
+                if (data.status === 'success') {
+                    // 保存到本地存储
+                    localStorage.setItem('apiBase', apiBase);
+                    localStorage.setItem('apiKey', apiKey);
+                    localStorage.setItem('model', model);
+                    localStorage.setItem('targetLangs', JSON.stringify(targetLangs));
+                    
+                    alert('配置已保存');
+                    bootstrap.Modal.getInstance(document.getElementById('apiConfigModal')).hide();
+                } else {
+                    alert('保存配置失败：' + data.message);
+                }
+            } catch (error) {
+                console.error('保存配置失败:', error);
+                alert('保存配置失败：' + error.message);
+            }
+        }
+
+        // 获取可用的模型列表
+        async function fetchModels(apiBase, apiKey) {
+            try {
+                const response = await fetch(`${apiBase}/models`, {
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`
+                    }
+                });
+                const data = await response.json();
+                return data.data || [];
+            } catch (error) {
+                console.error('获取模型列表失败:', error);
+                return [];
+            }
+        }
+
+        // 更新模型选择下拉框
+        async function updateModelList() {
+            const apiBase = document.getElementById('apiBase').value;
+            const apiKey = document.getElementById('apiKey').value;
+            const modelSelect = document.getElementById('model');
+
+            if (!apiBase || !apiKey) {
+                alert('请先填写API基础URL和密钥');
+                return;
+            }
+
+            try {
+                const models = await fetchModels(apiBase, apiKey);
+                modelSelect.innerHTML = ''; // 清空现有选项
+
+                if (models.length > 0) {
+                    models.forEach(model => {
+                        const option = document.createElement('option');
+                        option.value = model.id;
+                        option.textContent = model.id;
+                        modelSelect.appendChild(option);
+                    });
+                } else {
+                    // 如果获取失败，使用默认选项
+                    modelSelect.innerHTML = `
+                        <option value="gpt-4">GPT-4</option>
+                        <option value="gpt-3.5-turbo">GPT-3.5-Turbo</option>
+                    `;
+                    alert('获取模型列表失败，已恢复默认选项');
+                }
+            } catch (error) {
+                console.error('更新模型列表失败:', error);
+                alert('更新模型列表失败：' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

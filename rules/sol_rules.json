@@ -1,0 +1,32 @@
+{
+    "rules": [
+        {
+            "id": "SOL-001",
+            "name": "UUPSUpgradeable合约未正确初始化",
+            "description": "在KyberSwap的实现中，PoolOracle.sol和TokenPositionDescriptor.sol合约使用了UUPSUpgradeable模式，但这些合约的实现合约未正确初始化。攻击者可以利用这一漏洞，通过部署恶意实现合约来接管这些合约的功能，从而执行未经授权的操作。",
+            "pattern": "UUPSUpgradeable",
+            "severity": "critical",
+            "category": "合约初始化漏洞",
+            "target_langs": [
+                "sol"
+            ],
+            "lang_specific_patterns": {
+                "solidity": "UUPSUpgradeable"
+            }
+        },
+        {
+            "id": "SOL-C01",
+            "name": "恶意奖励合约调用",
+            "description": "当合约允许管理员设置额外奖励合约时，攻击者可能利用恶意合约导致用户资金损失。",
+            "pattern": "(external\\.call|transfer|send)\\(.*\\$addressVariable\\b",
+            "severity": "high",
+            "category": "恶意合约调用",
+            "target_langs": [
+                "sol"
+            ],
+            "lang_specific_patterns": {
+                "Solidity": "function\\s+getReward\\(\\).*\\{.*external\\.call.*\\}"
+            }
+        }
+    ]
+}
