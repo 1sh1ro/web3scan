@@ -71,7 +71,3 @@ python app.py
 如有问题或建议，请通过以下方式联系：
 - 提交Issue
 - 发送邮件至：[yangxinmeng@tju.edu.cn]
-
-## 🙏 致谢
-
-感谢所有为本项目做出贡献的开发者！
